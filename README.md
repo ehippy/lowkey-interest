@@ -25,6 +25,16 @@ A minimalist serverless backend for collecting people's interest in lowkey using
    curl https://your-api-url/count
    ```
 
+## Live Endpoints
+
+**Development:**
+- POST: `https://vjt43fk1d3.execute-api.us-east-1.amazonaws.com/dev/interest`
+- GET: `https://vjt43fk1d3.execute-api.us-east-1.amazonaws.com/dev/count`
+
+**Production:**
+- POST: `https://asfurk8l78.execute-api.us-east-1.amazonaws.com/prod/interest`
+- GET: `https://asfurk8l78.execute-api.us-east-1.amazonaws.com/prod/count`
+
 4. **Remove everything:**
    ```bash
    npm run remove
