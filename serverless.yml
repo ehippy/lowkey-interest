@@ -6,12 +6,18 @@ provider:
   region: us-east-1
   environment:
     DYNAMODB_TABLE: ${self:service}-${sls:stage}-emails
+    SNS_TOPIC_ARN: !Ref NotificationTopic
   iamRoleStatements:
     - Effect: Allow
       Action:
         - dynamodb:PutItem
       Resource:
         - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource:
+        - !Ref NotificationTopic
 
 functions:
   submitInterest:
@@ -39,3 +45,15 @@ resources:
           - AttributeName: timestamp
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
+    
+    NotificationTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${sls:stage}-notifications
+    
+    EmailSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Protocol: email
+        TopicArn: !Ref NotificationTopic
+        Endpoint: pmcdavid@gmail.com

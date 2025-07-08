@@ -1,8 +1,10 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION });
 const dynamodb = DynamoDBDocumentClient.from(dynamoClient);
+const sns = new SNSClient({ region: process.env.AWS_REGION });
 
 module.exports.submitInterest = async (event) => {
   console.log('Received event:', JSON.stringify(event, null, 2));
@@ -69,6 +71,15 @@ module.exports.submitInterest = async (event) => {
     };
 
     await dynamodb.send(new PutCommand(params));
+
+    // Send notification
+    const notificationParams = {
+      TopicArn: process.env.SNS_TOPIC_ARN,
+      Subject: `🚀 New Interest Signup - ${email.toLowerCase().trim()}`,
+      Message: `New email signup: ${email.toLowerCase().trim()}\nTime: ${timestamp}\n\nSomeone is interested in lowkey! 🎉`
+    };
+
+    await sns.send(new PublishCommand(notificationParams));
 
     return {
       statusCode: 201,
