@@ -1,0 +1,17 @@
+{
+  "name": "lowkey-interest",
+  "version": "1.0.0",
+  "description": "A micro backend for collecting people's interest in lowkey",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "remove": "serverless remove",
+    "logs": "serverless logs -f submitInterest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.400.0",
+    "@aws-sdk/lib-dynamodb": "^3.400.0"
+  },
+  "devDependencies": {
+    "serverless": "^3.30.0"
+  }
+}
