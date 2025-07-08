@@ -11,6 +11,8 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
       Resource:
         - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
     - Effect: Allow
@@ -26,6 +28,14 @@ functions:
       - http:
           path: interest
           method: post
+          cors: true
+  
+  getCount:
+    handler: handler.getCount
+    events:
+      - http:
+          path: count
+          method: get
           cors: true
 
 resources:

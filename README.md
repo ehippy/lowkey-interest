@@ -16,9 +16,13 @@ A minimalist serverless backend for collecting people's interest in lowkey using
 
 3. **Test the API:**
    ```bash
+   # Submit interest
    curl -X POST https://your-api-url/interest \
      -H "Content-Type: application/json" \
      -d '{"email": "test@example.com"}'
+   
+   # Get signup count
+   curl https://your-api-url/count
    ```
 
 4. **Remove everything:**
@@ -32,11 +36,17 @@ A minimalist serverless backend for collecting people's interest in lowkey using
 - Body: `{"email": "user@example.com"}`
 - Response: `{"message": "Interest recorded successfully", "email": "user@example.com", "timestamp": "2025-07-07T12:34:56.789Z"}`
 
+**GET /count**
+- No body required
+- Response: `{"totalSignups": 42, "message": "42 people are already interested! 🔥", "timestamp": "2025-07-07T12:34:56.789Z"}`
+- Perfect for adding social proof to your frontend
+
 ## What Gets Created
 
-- Lambda function to handle POST requests
-- API Gateway endpoint
-- DynamoDB table (pay-per-request)
+- Lambda functions to handle POST and GET requests
+- API Gateway endpoints (/interest and /count)
+- DynamoDB table with automatic counter tracking (pay-per-request)
+- SNS topic for email notifications
 - All IAM permissions
 
 ## Files

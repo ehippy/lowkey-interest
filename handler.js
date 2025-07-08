@@ -1,28 +1,28 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION });
 const dynamodb = DynamoDBDocumentClient.from(dynamoClient);
 const sns = new SNSClient({ region: process.env.AWS_REGION });
 
+// Shared CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Content-Type': 'application/json',
+};
+
 module.exports.submitInterest = async (event) => {
   console.log('Received event:', JSON.stringify(event, null, 2));
   
-  // CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json',
-  };
-
   try {
     // Handle preflight OPTIONS request
     if (event.httpMethod === 'OPTIONS') {
       return {
         statusCode: 200,
-        headers,
+        headers: corsHeaders,
         body: '',
       };
     }
@@ -31,7 +31,7 @@ module.exports.submitInterest = async (event) => {
     if (!event.body) {
       return {
         statusCode: 400,
-        headers,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Email is required' }),
       };
     }
@@ -42,7 +42,7 @@ module.exports.submitInterest = async (event) => {
     if (!email || typeof email !== 'string') {
       return {
         statusCode: 400,
-        headers,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Valid email is required' }),
       };
     }
@@ -52,7 +52,7 @@ module.exports.submitInterest = async (event) => {
     if (!emailRegex.test(email)) {
       return {
         statusCode: 400,
-        headers,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Invalid email format' }),
       };
     }
@@ -72,6 +72,21 @@ module.exports.submitInterest = async (event) => {
 
     await dynamodb.send(new PutCommand(params));
 
+    // Update counter entry
+    const counterParams = {
+      TableName: process.env.DYNAMODB_TABLE,
+      Key: { 
+        email: '__COUNTER__',
+        timestamp: 'count'
+      },
+      UpdateExpression: 'ADD signupCount :inc',
+      ExpressionAttributeValues: {
+        ':inc': 1
+      }
+    };
+    
+    await dynamodb.send(new UpdateCommand(counterParams));
+
     // Send notification
     const notificationParams = {
       TopicArn: process.env.SNS_TOPIC_ARN,
@@ -83,7 +98,7 @@ module.exports.submitInterest = async (event) => {
 
     return {
       statusCode: 201,
-      headers,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Interest recorded successfully',
         email: email.toLowerCase().trim(),
@@ -94,7 +109,51 @@ module.exports.submitInterest = async (event) => {
     console.error('Error:', error);
     return {
       statusCode: 500,
-      headers,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Internal server error' }),
+    };
+  }
+};
+
+module.exports.getCount = async (event) => {
+  console.log('Received count request:', JSON.stringify(event, null, 2));
+  
+  try {
+    // Handle preflight OPTIONS request
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: '',
+      };
+    }
+
+    // Get counter entry from DynamoDB
+    const params = {
+      TableName: process.env.DYNAMODB_TABLE,
+      Key: { 
+        email: '__COUNTER__',
+        timestamp: 'count'
+      }
+    };
+
+    const result = await dynamodb.send(new GetCommand(params));
+    const count = result.Item?.signupCount || 0;
+    
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        totalSignups: count,
+        message: count > 0 ? `${count} people are already interested! 🔥` : 'Be the first to join!',
+        timestamp: new Date().toISOString(),
+      }),
+    };
+  } catch (error) {
+    console.error('Error getting count:', error);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Internal server error' }),
     };
   }
