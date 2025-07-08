@@ -13,6 +13,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:GetItem
         - dynamodb:UpdateItem
+        - dynamodb:Query
       Resource:
         - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
     - Effect: Allow

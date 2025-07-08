@@ -1,5 +1,5 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION });
@@ -59,6 +59,31 @@ module.exports.submitInterest = async (event) => {
 
     // Create timestamp
     const timestamp = new Date().toISOString();
+
+    // Check if email already exists
+    const checkParams = {
+      TableName: process.env.DYNAMODB_TABLE,
+      KeyConditionExpression: 'email = :email',
+      ExpressionAttributeValues: {
+        ':email': email.toLowerCase().trim()
+      },
+      Limit: 1
+    };
+
+    const existingUser = await dynamodb.send(new QueryCommand(checkParams));
+    
+    if (existingUser.Items && existingUser.Items.length > 0) {
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          message: 'Email already registered',
+          email: email.toLowerCase().trim(),
+          timestamp: existingUser.Items[0].timestamp,
+          alreadyExists: true,
+        }),
+      };
+    }
 
     // Save to DynamoDB
     const params = {
