@@ -75,7 +75,7 @@ module.exports.submitInterest = async (event) => {
     // Send notification
     const notificationParams = {
       TopicArn: process.env.SNS_TOPIC_ARN,
-      Subject: `🚀 New Interest Signup - ${email.toLowerCase().trim()}`,
+      Subject: `🚀 New lowkey Signup - ${email.toLowerCase().trim()}`,
       Message: `New email signup: ${email.toLowerCase().trim()}\nTime: ${timestamp}\n\nSomeone is interested in lowkey! 🎉`
     };
 
