@@ -48,8 +48,10 @@ A minimalist serverless backend for collecting people's interest in lowkey using
 
 **GET /count**
 - No body required
-- Response: `{"totalSignups": 42, "message": "42 people are already interested! 🔥", "timestamp": "2025-07-07T12:34:56.789Z"}`
-- Perfect for adding social proof to your frontend
+- Response: `{"spotsRemaining": 345, "timestamp": "2025-07-07T12:34:56.789Z"}`
+- Perfect for adding social proof and urgency to your frontend
+- `urgencyLevel` can be: "low", "medium", "high", or "critical"
+- `spotsRemaining` shows remaining spots (without exposing the total limit)
 
 ## What Gets Created
 

@@ -153,6 +153,9 @@ module.exports.getCount = async (event) => {
       };
     }
 
+    // Internal limit (not exposed to client)
+    const MAX_SPOTS = 387;
+
     // Get counter entry from DynamoDB
     const params = {
       TableName: process.env.DYNAMODB_TABLE,
@@ -164,13 +167,13 @@ module.exports.getCount = async (event) => {
 
     const result = await dynamodb.send(new GetCommand(params));
     const count = result.Item?.signupCount || 0;
-    
+    const spotsLeft = Math.max(0, MAX_SPOTS - count);
+
     return {
       statusCode: 200,
       headers: corsHeaders,
       body: JSON.stringify({
-        totalSignups: count,
-        message: count > 0 ? `${count} people are already interested! 🔥` : 'Be the first to join!',
+        spotsRemaining: spotsLeft > 0 ? spotsLeft : 0,
         timestamp: new Date().toISOString(),
       }),
     };
